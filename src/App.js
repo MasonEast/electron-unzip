@@ -1,40 +1,45 @@
 import React, { useState } from 'react';
-import Header from './components/Header';
-import Sidebar from './components/Sidebar';
-// import Content from './components/Content';
-import Footer from './components/Footer';
-import './App.less';
+// import { remote } from 'electron';
+// import extractZip from 'extract-zip';
+// import path from 'path';
 
-const { ipcRenderer } = window.require('electron');
+const { ipcRenderer, remote } = window.require('electron');
 
 const App = () => {
-  const [chapters, setChapters] = useState([]);
+  const [filePath, setFilePath] = useState('');
+  const [outputPath, setOutputPath] = useState('');
+  const [message, setMessage] = useState('');
 
-  const openFile = async () => {
-    const response = await ipcRenderer.invoke('open-file');
-    if (!response.canceled) {
-      setChapters([]);
+  const handleUnzip = async () => {
+    const response = await ipcRenderer.invoke('unzip-file', {filePath, outputPath});
+
+  };
+
+  const selectFile = async () => {
+    const {canceled, filePaths } = await ipcRenderer.invoke('open-file');
+
+    if (!canceled) {
+      setFilePath(filePaths[0]);
     }
   };
 
+  const selectOutputDir = async () => {
+    const {canceled, filePaths } = await ipcRenderer.invoke('open-directory');
 
+    if (!canceled) {
+        setOutputPath(filePaths[0]);
+    }
+  };
 
   return (
-    <div className="app">
-      <Header />
-      <button onClick={openFile}>打开文件</button>
-      <div className='content'>
-      <Sidebar chapters={chapters} />
-      <pre className='text_pre'>
-      {chapters.map((chapter, index) => (
-            <div key={index}>
-              <h2 id={`chapter${index}`}>{chapter.title}</h2>
-              <p>{chapter.content}</p>
-            </div>
-          ))}
-      </pre>
-      </div>
-      <Footer />
+    <div>
+      <h1>Unzipper</h1>
+      <button onClick={selectFile}>Select ZIP File</button>
+      <p>{filePath}</p>
+      <button onClick={selectOutputDir}>Select Output Directory</button>
+      <p>{outputPath}</p>
+      <button onClick={handleUnzip}>Unzip</button>
+      <p>{message}</p>
     </div>
   );
 };
