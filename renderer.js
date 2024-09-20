@@ -1,52 +1,23 @@
+const { ipcRenderer } = require('electron');
 
-function dealChapters(content) {
-    const chapters = parseChapters(content);
-    displayChapters(chapters);
-}
+document.getElementById('start-unzip').addEventListener('click', () => {
+  const zipFilePath = 'your-archive.zip'; // 替换为你的 zip 文件路径
+  const outputDir = 'output-folder'; // 替换为你的输出目录
+  ipcRenderer.send('start-unzip', zipFilePath, outputDir);
+});
 
-// document.getElementById('fileInput').addEventListener('change', function(event) {
-//     const file = event.target.files[0];
-//     if (file) {
-//         const reader = new FileReader();
-//         reader.onload = function(e) {
-//             const text = e.target.result;
-//             const chapters = parseChapters(text);
-//             displayChapters(chapters);
-//         };
-//         reader.readAsText(file);
-//     }
-// });
+ipcRenderer.on('unzip-progress', (event, progress) => {
+  const progressBar = document.getElementById('progress-bar');
+  const progressText = document.getElementById('progress-text');
+  
+  progressBar.value = progress;
+  progressText.textContent = `${progress}%`;
+});
 
-function parseChapters(text) {
-    // 简单根据“第*章”划分章节，实际情况可能更复杂
-    const chapterRegex = /第[一二三四五六七八九十百千\d]+章/g;
-    const sections = text.split(chapterRegex).filter(section => section.trim());
+ipcRenderer.on('unzip-complete', () => {
+  alert('Unzip complete!');
+});
 
-    return sections.map((section, index) => {
-        const title = `第${index + 1}章`;
-        return { title, content: section.trim() };
-    });
-}
-
-function displayChapters(chapters) {
-    const output = document.getElementById('output');
-    output.innerHTML = '';
-
-    chapters.forEach(chapter => {
-        const chapterElement = document.createElement('div');
-        const titleElement = document.createElement('h2');
-        const contentElement = document.createElement('p');
-
-        titleElement.textContent = chapter.title;
-        contentElement.textContent = chapter.content;
-
-        chapterElement.appendChild(titleElement);
-        chapterElement.appendChild(contentElement);
-
-        output.appendChild(chapterElement);
-    });
-}
-
-module.exports = {
-    dealChapters
-}
+ipcRenderer.on('unzip-error', (event, errorMessage) => {
+  alert(`Error during unzip: ${errorMessage}`);
+});
